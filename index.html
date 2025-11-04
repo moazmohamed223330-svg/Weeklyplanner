@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Weekly To-Do</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <style>
+    :root {
+        --bg: #0f172a;
+        --card: #071427;
+        --muted: #9aa8bf;
+        --accent: #60a5fa;
+        --glass: rgba(255, 255, 255, 0.03);
+        --sun: #ffedd5;
+        --mon: #e0f2fe;
+        --tue: #fef3c7;
+        --wed: #e9d5ff;
+        --thu: #dbeafe;
+        --fri: #dcfce7;
+        --sat: #fce7f3;
+        --day-text: #042033;
+        font-family: Inter, system-ui, Arial, sans-serif;
+    }
+    * {
+        box-sizing: border-box;
+    }
+    body {
+        margin: 0;
+        background: linear-gradient(180deg, #071129, #041225);
+        color: #e6eef8;
+        padding: 12px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    header h1 {
+        margin: 0;
+        font-size: 20px;
+    }
+    .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    button {
+        cursor: pointer;
+    }
+    .btn {
+        background: var(--accent);
+        color: #05223a;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    .small {
+        color: var(--muted);
+        font-size: 13px;
+    }
+    .board {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+    /* sidebar */
+    .sidebar {
+        background: var(--card);
+        padding: 12px;
+        border-radius: 12px;
+        min-height: 420px;
+        position: relative;
+        z-index: 5;
+    }
+    .add-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    /* completed styles */
+    .td-task.done {
+        opacity: 0.95;
+        transform: none;
+        background: rgba(220, 255, 220, 0.06);
+        border: 1px solid rgba(120, 220, 140, 0.12);
+    }
+    .td-task .title.done {
+        text-decoration: line-through;
+        color: var(--muted);
+    }
+    .completed-mini {
+        background: linear-gradient(
+        90deg,
+        rgba(220, 255, 220, 0.06),
+        rgba(255, 255, 255, 0.01)
+        );
+        padding: 8px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        opacity: 0.98;
+    }
+    .completed-mini .small {
+        color: #1f5132;
+        font-size: 12px;
+    }
+    input[type="text"],
+    select {
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        background: var(--glass);
+        color: inherit;
+        outline: none;
+        font-size: 14px;
+    }
+    input[type="date"] {
+        padding: 6px;
+        border-radius: 8px;
+        background: transparent;
+        color: inherit;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        font-size: 14px;
+    }
+    textarea {
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.04);
+        background: var(--glass);
+        color: inherit;
+        outline: none;
+        resize: vertical;
+        font-size: 14px;
+    }
+    .chip {
+        padding: 6px 8px;
+        border-radius: 8px;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 14px;
+    }
+    .list-small {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 260px;
+        overflow: auto;
+        padding-right: 6px;
+    }
+    .task-mini {
+        background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.02),
+        transparent
+        );
+        padding: 8px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    /* week grid */
+    .week {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+    }
+    #assignDay option {
+        color: black;
+    }
+
+    .day {
+        min-height: 420px;
+        border-radius: 10px;
+        padding: 10px;
+        background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.02),
+        rgba(255, 255, 255, 0.01)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    .day-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+    }
+    .day-title {
+        font-weight: 800;
+        color: #e6eef8;
+        padding: 10px;
+        border-radius: 8px;
+        display: inline-block;
+        min-width: 100px;
+        text-align: center;
+        background: transparent;
+        box-shadow: none;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.03);
+        font-size: 14px;
+    }
+    .date-badge {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 6px;
+        font-weight: 600;
+    }
+    .dropzone {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow: auto;
+        padding-top: 8px;
+    }
+    .td-task {
+        background: #071a2b;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 8px;
+        cursor: grab;
+    }
+    .td-task.dragging {
+        opacity: 0.6;
+    }
+    .td-task .meta {
+        font-size: 12px;
+        color: var(--muted);
+    }
+    .td-task .note {
+        font-size: 12px;
+        color: var(--muted);
+        max-height: 44px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        margin-top: 6px;
+    }
+    .prio {
+        font-weight: 700;
+        padding: 6px 8px;
+        border-radius: 8px;
+        color: #042033;
+        margin-bottom: 6px;
+        display: inline-block;
+        font-size: 12px;
+    }
+    .prio-high {
+        background: #fb7185;
+    }
+    .prio-med {
+        background: #f59e0b;
+    }
+    .prio-low {
+        background: #34d399;
+    }
+    .general-bucket {
+        background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.01),
+        transparent
+        );
+        padding: 8px;
+        border-radius: 8px;
+        min-height: 120px;
+    }
+    /* icons */
+    .icon-btn {
+        background: transparent;
+        border: none;
+        padding: 6px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .icon {
+        width: 18px;
+        height: 18px;
+        display: inline-block;
+    }
+    /* day colors */
+    .sun .day-title {
+        background: var(--sun);
+        color: #042033;
+    }
+    .mon .day-title {
+        background: var(--mon);
+        color: #042033;
+    }
+    .tue .day-title {
+        background: var(--tue);
+        color: #042033;
+    }
+    .wed .day-title {
+        background: var(--wed);
+        color: #042033;
+    }
+    .thu .day-title {
+        background: var(--thu);
+        color: #042033;
+    }
+    .fri .day-title {
+        background: var(--fri);
+        color: #042033;
+    }
+    .sat .day-title {
+        background: var(--sat);
+        color: #042033;
+    }
+
+    /* current day highlight */
+    .day.today {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(96,165,250,0.12);
+        border-color: rgba(96,165,250,0.28);
+    }
+    .day.today .day-title {
+        outline: 2px solid rgba(96,165,250,0.16);
+        border-radius: 10px;
+    }
+
+    /* quick add tweaks */
+    #quickPrio {
+        min-width: 84px;
+    }
+    /* base: force svg to use currentColor (safety) */
+    .icon { color: inherit; }
+
+    /* 🎨 NEW ICON COLORS 🎨 */
+    .td-task button[data-action="toggle"],
+    .task-mini button[data-action="toggle"] {
+        color: #34d399;
+    }
+    .td-task button[data-action="del"],
+    .task-mini button[data-action="del"] {
+        color: #f87171;
+    }
+    .td-task button[data-action="edit"],
+    .task-mini button[data-action="edit"] {
+        color: #f59e0b;
+    }
+    .td-task button[data-action="move"],
+    .task-mini button[data-action="move"] {
+        color: var(--accent);
+    }
+    .td-task button[data-action="viewnote"],
+    .task-mini button[data-action="viewnote"] {
+        color: var(--muted);
+    }
+    /* 🎨 END NEW ICON COLORS 🎨 */
+
+    /* ==================== */
+    /* RESPONSIVE DESIGN - OPPO A60 FRIENDLY */
+    /* ==================== */
+
+    /* For tablets and small laptops */
+    @media (max-width: 1024px) {
+        .board {
+            grid-template-columns: 280px 1fr;
+            gap: 15px;
+        }
+        .week {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        .day-title {
+            min-width: 80px;
+            font-size: 13px;
+            padding: 8px;
+        }
+    }
+
+    /* For large phones (OPPO A60) */
+    @media (max-width: 768px) {
+        body {
+            padding: 8px;
+            gap: 8px;
+        }
+        
+        .board {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        
+        .sidebar {
+            min-height: auto;
+            padding: 10px;
+        }
+        
+        .week {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .day {
+            min-height: 350px;
+            padding: 8px;
+        }
+        
+        .day-title {
+            min-width: 70px;
+            font-size: 12px;
+            padding: 6px 8px;
+        }
+        
+        .date-badge {
+            font-size: 10px;
+        }
+        
+        header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .controls {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .btn, .chip {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+        
+        .td-task {
+            padding: 8px;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .task-mini {
+            padding: 6px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        
+        .task-mini > div:last-child {
+            align-self: flex-end;
+        }
+        
+        .list-small {
+            max-height: 200px;
+        }
+    }
+
+    /* For small phones (OPPO A60 portrait) */
+    @media (max-width: 480px) {
+        body {
+            padding: 6px;
+        }
+        
+        .week {
+            grid-template-columns: 1fr;
+        }
+        
+        .day {
+            min-height: 300px;
+        }
+        
+        .day-title {
+            min-width: 100%;
+            font-size: 14px;
+            padding: 10px;
+        }
+        
+        .add-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .add-row input,
+        .add-row select {
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        
+        .controls {
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .controls .chip,
+        .controls .btn {
+            width: 100%;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 18px;
+        }
+        
+        .sidebar {
+            padding: 8px;
+        }
+        
+        /* Modal adjustments for mobile */
+        #modalInner {
+            padding: 12px;
+            margin: 10px;
+        }
+        
+        #modalInner > div:first-child {
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        #modalInner > div:first-child > div:first-child {
+            width: 100%;
+        }
+        
+        /* Better touch targets */
+        .icon-btn {
+            padding: 8px;
+            min-width: 44px;
+            min-height: 44px;
+        }
+        
+        .btn, .chip {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Improve readability */
+        .td-task .title {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .td-task .note {
+            font-size: 12px;
+            line-height: 1.3;
+        }
+    }
+
+    /* For very small phones */
+    @media (max-width: 360px) {
+        .day-title {
+            font-size: 12px;
+            padding: 8px;
+        }
+        
+        .date-badge {
+            font-size: 9px;
+        }
+        
+        .td-task {
+            padding: 6px;
+        }
+        
+        .prio {
+            font-size: 10px;
+            padding: 4px 6px;
+        }
+    }
+
+    /* Landscape mode for phones */
+    @media (max-height: 500px) and (orientation: landscape) {
+        .sidebar {
+            min-height: 300px;
+        }
+        
+        .day {
+            min-height: 280px;
+        }
+        
+        .list-small {
+            max-height: 150px;
+        }
+    }
+
+    /* Improve scrolling on mobile */
+    .dropzone {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .list-small {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Prevent zoom on input focus for iOS */
+    @media screen and (max-width: 768px) {
+        input[type="text"],
+        input[type="date"],
+        select,
+        textarea {
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+    }
+    </style>
+</head>
+<body>
+    <!-- باقي الكود بدون تغيير -->
+    <!-- نفس الـ HTML السابق تماماً -->
+
+    <header>
+    <div>
+        <h1>Weekly To-Do Board</h1>
+        <div class="small" id="weekRange">—</div>
+    </div>
+    <div class="controls">
+        <button class="chip" id="prevWeek">◀ Prev</button>
+        <button class="chip" id="todayWeek">This Week</button>
+        <button class="chip" id="nextWeek">Next ▶</button>
+        <div style="width: 8px"></div>
+        <button class="btn" id="openNew">+ New Task</button>
+        <button id="login-btn" class="chip">Login with Google</button>
+        <button id="logout-btn" class="chip" style="display:none">Logout</button>
+    </div>
+    </header>
+
+    <main class="board">
+    <aside class="sidebar">
+        <div
+        style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        "
+        >
+        <div>
+            <b>General Tasks</b>
+            <div class="small">Unassigned tasks for this week</div>
+        </div>
+        <div class="small">Drag → day</div>
+        </div>
+
+        <div
+        class="list-small"
+        id="generalList"
+        title="Drop here to unassign"
+        ></div>
+
+        <hr
+        style="
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            margin: 12px 0;
+        "
+        />
+        <div
+        style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        "
+        >
+        <div>
+            <b>Completed</b>
+            <div class="small">Tasks you marked done this week</div>
+        </div>
+        <div class="small">Undo / Delete</div>
+        </div>
+        <div class="list-small" id="completedList"></div>
+
+        <hr
+        style="
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            margin: 12px 0;
+        "
+        />
+
+        <div><b>Quick Add</b></div>
+        <div class="add-row" style="margin-top: 8px">
+        <input id="quickText" placeholder="Task title" type="text" />
+        <select id="quickPrio" title="Priority" style="color: white">
+            <option value="medium" style="color: black">Medium</option>
+            <option value="high" style="color: black">High</option>
+            <option value="low" style="color: black">Low</option>
+        </select>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 8px">
+        <button class="btn" id="quickAdd">Add to General</button>
+        <button class="chip" id="exportWeek">Export</button>
+        <button class="chip" id="importBtn">Import</button>
+        <input id="importFile" type="file" accept="application/json" style="display:none" />
+
+        </div>
+
+        <div style="margin-top: 12px; color: var(--muted); font-size: 13px">
+        Tip: Drag tasks from General to any day — or drag from day back to
+        General to unassign. Use the arrow button to move a task to next week.
+        </div>
+    </aside>
+
+    <section>
+        <div
+        style="
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 8px;
+        "
+        >
+        <div class="small">Week view (drag & drop tasks):</div>
+        <div class="small" id="debug" style="opacity: 0.6"></div>
+        </div>
+
+        <div class="week" id="weekGrid"></div>
+    </section>
+    </main>
+
+    <!-- Modal code remains the same -->
+    <div
+    id="modal"
+    style="
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        z-index: 9999;
+    "
+    >
+    <div
+        style="
+        position: absolute;
+        inset: 0;
+        background: rgba(1, 6, 15, 0.6);
+        backdrop-filter: blur(4px);
+        "
+    ></div>
+
+    <div
+        id="modalInner"
+        style="
+        position: relative;
+        z-index: 10000;
+        width: 100%;
+        max-width: 720px;
+        background: var(--card);
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        "
+    >
+        <div
+        style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        "
+        >
+        <div>
+            <b>New Task</b>
+            <div class="small">
+            Add task to a specific day or leave it general
+            </div>
+        </div>
+        <button class="chip" id="closeModal">Close</button>
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <input
+            id="newTitle"
+            placeholder="Task title"
+            type="text"
+            style="flex: 1"
+        />
+        <select id="newPrio">
+            <option value="medium" style="color: black">Medium</option>
+            <option value="high" style="color: black">High</option>
+            <option value="low" style="color: black">Low</option>
+        </select>
+        <input id="newDate" type="date" />
+        <select id="assignDay">
+            <option value="general">General (no day)</option>
+        </select>
+        <button class="btn" id="saveNew">Save</button>
+        </div>
+
+        <div style="margin-top:8px">
+            <label class="small">Note (optional)</label>
+            <textarea id="newNote" rows="3" placeholder="Add a short note or details..."></textarea>
+        </div>
+
+        <div style="margin-top: 8px; color: var(--muted); font-size: 13px">
+        If you pick a date in the date field, it will be used. Otherwise the
+        assign-day select will be used. Leaving both empty keeps it in
+        General.
+        </div>
+    </div>
+    </div>
+
+    <!-- باقي الـ JavaScript بدون تغيير -->
+    <!-- نفس الـ JavaScript السابق -->
+
+    <script>
+    // Utils
+    function startOfWeekSat(d) {
+        const dt = new Date(d);
+        dt.setHours(0, 0, 0, 0);
+        const day = dt.getDay();
+        const diff = (day - 6 + 7) % 7;
+        dt.setDate(dt.getDate() - diff);
+        return dt;
+    }
+    // produce YYYY-MM-DD using local date (avoids timezone shifts)
+    function isoLocal(d) {
+        if (!d) return null;
+        const t = new Date(d);
+        const y = t.getFullYear();
+        const m = (t.getMonth() + 1).toString().padStart(2, "0");
+        const da = t.getDate().toString().padStart(2, "0");
+        return `${y}-${m}-${da}`;
+    }
+    function weekKey(ws) {
+        const dt = new Date(ws);
+        dt.setHours(0, 0, 0, 0);
+        return isoLocal(dt);
+    }
+    function escapeHtml(s) {
+        if (s === null || s === undefined) return "";
+        return String(s).replace(
+        /[&<>"']/g,
+        (m) =>
+            ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+            }[m])
+        );
+    }
+
+    // state
+    let currentWeekStart = startOfWeekSat(new Date());
+    let tasks = JSON.parse(localStorage.getItem("weekly_todos_v1") || "[]");
+
+    // elements
+    const weekGrid = document.getElementById("weekGrid");
+    const weekRange = document.getElementById("weekRange");
+    const generalList = document.getElementById("generalList");
+    const completedList = document.getElementById("completedList");
+    const prevWeek = document.getElementById("prevWeek");
+    const nextWeek = document.getElementById("nextWeek");
+    const todayWeek = document.getElementById("todayWeek");
+    const openNew = document.getElementById("openNew");
+    const modal = document.getElementById("modal");
+    const closeModal = document.getElementById("closeModal");
+    const saveNew = document.getElementById("saveNew");
+    const assignDay = document.getElementById("assignDay");
+    const newTitle = document.getElementById("newTitle");
+    const newPrio = document.getElementById("newPrio");
+    const newDate = document.getElementById("newDate");
+    const newNote = document.getElementById("newNote");
+    const quickText = document.getElementById("quickText");
+    const quickPrio = document.getElementById("quickPrio");
+    const quickAdd = document.getElementById("quickAdd");
+    const exportWeek = document.getElementById("exportWeek");
+
+    const dayNames = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
+    const dayClasses = ["sat", "sun", "mon", "tue", "wed", "thu", "fri"];
+
+    function saveAll() {
+        // Save to localStorage only when NOT logged in
+        if (!window.userUid) {
+            localStorage.setItem("weekly_todos_v1", JSON.stringify(tasks));
+        }
+        // When logged in, data is automatically saved to Firestore via the realtime listener
+    }
+    function uid() {
+        return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+    function tasksForWeek(wsKey) {
+        return tasks.filter((t) => t.week === wsKey);
+    }
+
+    // move task to next week (unassigned)
+    function moveToNextWeek(id) {
+        const t = tasks.find((x) => x.id === id);
+        if (!t) return;
+        const nextStart = new Date(currentWeekStart);
+        nextStart.setDate(nextStart.getDate() + 7);
+        t.week = weekKey(nextStart);
+        t.assignedDate = null;
+        saveAll();
+        render();
+    }
+
+    // toggle done
+    function toggleDone(id) {
+        const t = tasks.find((x) => x.id === id);
+        if (!t) return;
+        t.done = !t.done;
+        if (t.done) t.completedAt = new Date().toISOString();
+        else delete t.completedAt;
+        saveAll();
+        render();
+    }
+
+    // create
+    function createTask({ title, priority = "medium", assignedDate = null, note = "" }) {
+        const wk = weekKey(currentWeekStart);
+        const t = {
+        id: uid(),
+        title,
+        priority,
+        assignedDate,
+        note,
+        done: false,
+        created: new Date().toISOString(),
+        week: wk,
+        };
+        tasks.unshift(t);
+        saveAll();
+        render();
+        return t;
+    }
+
+    // small svg icons
+    const ICONS = {
+        check: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`,
+        undo: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19V6h11"/><path d="M5 12l4-4 4 4"/></svg>`,
+        edit: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`,
+        trash: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>`,
+        next: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>`,
+        note: `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15V6a2 2 0 0 0-2-2H7L3 6v13a2 2 0 0 0 2 2h11"/><path d="M17 21v-5a2 2 0 0 0-2-2H7"/></svg>`
+    };
+
+    // helper to show full note (simple UX)
+    function showFullNote(text) {
+        if (!text) return alert("No note.");
+        alert(text);
+    }
+
+    // render
+    function render() {
+        const wk = weekKey(currentWeekStart);
+        const start = new Date(currentWeekStart);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        weekRange.textContent = `${isoLocal(start)} → ${isoLocal(end)}`;
+
+        // assignDay options
+        assignDay.innerHTML = `<option value="general">General (no day)</option>`;
+        for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const isoD = isoLocal(d);
+        assignDay.innerHTML += `<option value="${isoD}">${dayNames[i]} — ${isoD}</option>`;
+        }
+
+        // prepare lists
+        weekGrid.innerHTML = "";
+        const weekTasks = tasksForWeek(wk);
+        const generalTasks = weekTasks.filter(
+        (t) => !t.assignedDate && !t.done
+        );
+        const completedTasks = weekTasks.filter((t) => t.done);
+
+        // general list (drop target)
+        generalList.innerHTML = "";
+        if (generalTasks.length === 0)
+        generalList.innerHTML = `<div class="small">No general tasks</div>`;
+        else
+        generalTasks.forEach((t) => {
+            const el = document.createElement("div");
+            el.className = "task-mini";
+            el.draggable = true;
+            el.dataset.id = t.id;
+            el.innerHTML = `<div style="flex:1">
+            <div style="font-weight:700">${escapeHtml(t.title)}</div>
+            <div class="small">Priority: ${t.priority}${t.note ? " • " : ""}${t.note ? escapeHtml(t.note).slice(0,60) + (t.note.length>60 ? "…" : "") : ""}</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+            <button class="icon-btn" title="Done" data-action="toggle" data-id="${t.id}">${ICONS.check}</button>
+            <button class="icon-btn" title="Edit" data-action="edit" data-id="${t.id}">${ICONS.edit}</button>
+            <button class="icon-btn" title="Delete" data-action="del" data-id="${t.id}">${ICONS.trash}</button>
+            <button class="icon-btn" title="Move to next week" data-action="move" data-id="${t.id}">${ICONS.next}</button>
+            ${t.note ? `<button class="icon-btn" title="Show note" data-action="viewnote" data-id="${t.id}">${ICONS.note}</button>` : ""}
+            </div>`;
+            addDragHandlersMini(el);
+            generalList.appendChild(el);
+        });
+
+        // completed sidebar
+        completedList.innerHTML = "";
+        if (completedTasks.length === 0)
+        completedList.innerHTML = `<div class="small">No completed tasks</div>`;
+        else
+        completedTasks.forEach((t) => {
+            const el = document.createElement("div");
+            el.className = "completed-mini";
+            el.dataset.id = t.id;
+            el.innerHTML = `<div style="flex:1">
+            <div style="font-weight:700">${escapeHtml(t.title)}</div>
+            <div class="small">Priority: ${t.priority} • ${new Date(t.created).toLocaleString()}</div>
+            ${t.note ? `<div class="small">Note: ${escapeHtml(t.note).slice(0,80)}${t.note.length>80?"…":""}</div>` : ""}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="chip" data-action="undo" data-id="${t.id}">Undo</button>
+            <button class="chip" data-action="del" data-id="${t.id}">Delete</button>
+            </div>`;
+            el.querySelectorAll("[data-action]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const action = btn.dataset.action;
+                const id = btn.dataset.id;
+                if (action === "undo") toggleDone(id);
+                else if (action === "del") {
+                if (confirm("Delete completed task?")) {
+                    // use unified deleteTask (handles Firestore if logged in)
+                    deleteTask(id);
+                }
+                }
+            });
+            });
+            completedList.appendChild(el);
+        });
+
+        // week columns
+        const todayIso = isoLocal(new Date());
+        for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const cls = dayClasses[i];
+        const isoD = isoLocal(d);
+        const dayDiv = document.createElement("div");
+        dayDiv.className = `day ${cls}${isoD===todayIso ? " today" : ""}`;
+        const header = document.createElement("div");
+        header.className = "day-header";
+        const title = document.createElement("div");
+        title.className = "day-title";
+        title.innerHTML = `${dayNames[i]}<span class="date-badge">${isoD}</span>`;
+        header.appendChild(title);
+        const drop = document.createElement("div");
+        drop.className = "dropzone";
+        drop.dataset.date = isoD;
+        attachDropHandlers(drop);
+
+        const dayTasks = weekTasks.filter((t) => t.assignedDate === isoD);
+        dayTasks.sort((a, b) => {
+            const pr = { high: 1, medium: 2, low: 3 };
+            if (a.done !== b.done) return a.done ? 1 : -1;
+            if (pr[a.priority] !== pr[b.priority])
+            return pr[a.priority] - pr[b.priority];
+            return new Date(b.created) - new Date(a.created);
+        });
+
+        dayTasks.forEach((t) => {
+            const tEl = document.createElement("div");
+            tEl.className = "td-task" + (t.done ? " done" : "");
+            tEl.draggable = true;
+            tEl.dataset.id = t.id;
+            const prClass =
+            t.priority === "high"
+                ? "prio-high"
+                : t.priority === "medium"
+                ? "prio-med"
+                : "prio-low";
+            tEl.innerHTML = `<div style="flex:1">
+                <div class="prio ${prClass}">${t.priority.toUpperCase()}</div>
+                <div class="title ${t.done ? "done" : ""}" style="font-weight:700">${escapeHtml(t.title)}</div>
+                ${t.note ? `<div class="note">${escapeHtml(t.note)}</div>` : ""}
+                <div class="meta">Created: ${new Date(t.created).toLocaleString()}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                <button class="icon-btn" title="Done" data-action="toggle" data-id="${t.id}">${ICONS.check}</button>
+                <button class="icon-btn" title="Edit" data-action="edit" data-id="${t.id}">${ICONS.edit}</button>
+                <button class="icon-btn" title="Delete" data-action="del" data-id="${t.id}">${ICONS.trash}</button>
+                <button class="icon-btn" title="Move to next week" data-action="move" data-id="${t.id}">${ICONS.next}</button>
+                ${t.note ? `<button class="icon-btn" title="Show note" data-action="viewnote" data-id="${t.id}">${ICONS.note}</button>` : ""}
+                </div>
+            </div>`;
+            addDragHandlers(tEl);
+            drop.appendChild(tEl);
+        });
+
+        dayDiv.appendChild(header);
+        dayDiv.appendChild(drop);
+        weekGrid.appendChild(dayDiv);
+        }
+    } // render end
+
+    // drag handlers for day item
+    function addDragHandlers(el) {
+        el.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", el.dataset.id);
+        el.classList.add("dragging");
+        });
+        el.addEventListener("dragend", () => el.classList.remove("dragging"));
+        el.querySelectorAll("[data-action]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            if (action === "del") {
+            if (confirm("Delete task?")) {
+                deleteTask(id);
+            }
+            } else if (action === "edit") {
+            openEditDialog(id);
+            } else if (action === "toggle") {
+            toggleDone(id);
+            } else if (action === "move") {
+            moveToNextWeek(id);
+            } else if (action === "viewnote") {
+            const t = tasks.find(x=>x.id===id);
+            if (t) showFullNote(t.note);
+            }
+        });
+        });
+    }
+
+    // drag handlers for mini/general item
+    function addDragHandlersMini(el) {
+        el.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", el.dataset.id);
+        el.classList.add("dragging");
+        });
+        el.addEventListener("dragend", () => el.classList.remove("dragging"));
+        el.querySelectorAll("[data-action]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            if (action === "del") {
+            if (confirm("Delete task?")) {
+                deleteTask(id);
+            }
+            } else if (action === "edit") {
+            openEditDialog(id);
+            } else if (action === "toggle") {
+            toggleDone(id);
+            } else if (action === "move") {
+            moveToNextWeek(id);
+            } else if (action === "viewnote") {
+            const t = tasks.find(x=>x.id===id);
+            if (t) showFullNote(t.note);
+            }
+        });
+        });
+    }
+
+    // drop handlers for day columns
+    function attachDropHandlers(drop) {
+        drop.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        drop.style.outline = "2px dashed rgba(255,255,255,0.06)";
+        });
+        drop.addEventListener("dragleave", () => {
+        drop.style.outline = "";
+        });
+        drop.addEventListener("drop", (e) => {
+        e.preventDefault();
+        drop.style.outline = "";
+        const id = e.dataTransfer.getData("text/plain");
+        const t = tasks.find((x) => x.id === id);
+        if (!t) return;
+        t.assignedDate = drop.dataset.date;
+        t.week = weekKey(currentWeekStart);
+        saveAll();
+        render();
+        });
+    }
+
+    // allow dropping back to General (unassign)
+    function setupGeneralDrop() {
+        generalList.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        generalList.style.outline = "2px dashed rgba(255,255,255,0.06)";
+        });
+        generalList.addEventListener("dragleave", () => {
+        generalList.style.outline = "";
+        });
+        generalList.addEventListener("drop", (e) => {
+        e.preventDefault();
+        generalList.style.outline = "";
+        const id = e.dataTransfer.getData("text/plain");
+        const t = tasks.find((x) => x.id === id);
+        if (!t) return;
+        t.assignedDate = null;
+        t.week = weekKey(currentWeekStart);
+        saveAll();
+        render();
+        });
+    }
+
+    // modal control + outside click close
+    function openModal() {
+        modal.style.display = "flex";
+        newTitle.value = "";
+        newPrio.value = "medium";
+        newDate.value = "";
+        newNote.value = "";
+        assignDay.value = "general";
+        setTimeout(() => {
+        const inp = document.getElementById("newTitle");
+        if (inp) inp.focus();
+        }, 60);
+    }
+    function closeModalFn() {
+        modal.style.display = "none";
+    }
+    openNew.addEventListener("click", openModal);
+    closeModal.addEventListener("click", closeModalFn);
+    // close when clicking on backdrop (outside modalInner)
+    modal.addEventListener("click", (e) => {
+        const inner = document.getElementById("modalInner");
+        if (e.target === modal) closeModalFn();
+    });
+    // close on ESC
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModalFn();
+    });
+
+    saveNew.addEventListener("click", () => {
+        const title = newTitle.value.trim();
+        if (!title) {
+        alert("Please enter a title");
+        return;
+        }
+        const pr = newPrio.value;
+        const note = newNote.value.trim();
+        // prefer explicit date field, then assignDay select
+        const assign = newDate.value
+        ? newDate.value
+        : assignDay.value === "general"
+        ? null
+        : assignDay.value;
+        // use unified createTask (will push to Firestore when logged in)
+        createTask({ title, priority: pr, assignedDate: assign, note });
+        closeModalFn();
+    });
+
+    // quick add
+    quickAdd.addEventListener("click", () => {
+        const t = quickText.value.trim();
+        if (!t) return;
+        createTask({ title: t, priority: quickPrio.value, assignedDate: null, note: "" });
+        quickText.value = "";
+        quickText.focus();
+    });
+    quickText.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+        quickAdd.click();
+        }
+    });
+
+    // edit prompt
+    function openEditDialog(id) {
+        const t = tasks.find((x) => x.id === id);
+        if (!t) return;
+        const newTitleV = prompt("Edit title", t.title);
+        if (newTitleV === null) return;
+        const newPrio =
+        prompt("Priority (high / medium / low)", t.priority) || t.priority;
+        const newAssign =
+        prompt(
+            "Assign date (YYYY-MM-DD) or leave empty for General",
+            t.assignedDate || ""
+        ) || null;
+        const newNoteV = prompt("Note (leave empty to clear)", t.note || "") ;
+        t.title = newTitleV.trim();
+        t.priority = newPrio;
+        t.assignedDate = newAssign;
+        t.note = newNoteV === null ? t.note : newNoteV.trim();
+        t.week = weekKey(currentWeekStart);
+        saveAll();
+        render();
+    }
+
+    // nav
+    prevWeek.addEventListener("click", () => {
+        currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+        render();
+    });
+    nextWeek.addEventListener("click", () => {
+        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+        render();
+    });
+    todayWeek.addEventListener("click", () => {
+        currentWeekStart = startOfWeekSat(new Date());
+        render();
+    });
+
+    // export
+    exportWeek.addEventListener("click", () => {
+        const wk = weekKey(currentWeekStart);
+        const data = tasks.filter((t) => t.week === wk);
+        const blob = new Blob(
+        [
+            JSON.stringify(
+            { week: wk, range: weekRange.textContent, tasks: data },
+            null,
+            2
+            ),
+        ],
+        { type: "application/json" }
+        );
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `week_${wk}_tasks.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
+
+    // init
+    setupGeneralDrop();
+    render();
+    window._weekly = {
+        tasks,
+        createTask,
+        render,
+        toggleDone,
+        moveToNextWeek,
+    };
+    /* 1) force save before the page unloads (safety) */
+    window.addEventListener("beforeunload", () => {
+    try { saveAll(); } catch (e) { /* ignore */ }
+    });
+
+    /* Import button logic (kept) */
+    const importBtn = document.getElementById("importBtn");
+    const importFile = document.getElementById("importFile");
+
+    if (importBtn && importFile) {
+    importBtn.addEventListener("click", () => importFile.click());
+
+    importFile.addEventListener("change", (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+        try {
+            const parsed = JSON.parse(ev.target.result);
+            const incoming = Array.isArray(parsed.tasks) ? parsed.tasks : (Array.isArray(parsed) ? parsed : []);
+            if (!incoming.length) {
+            alert("No tasks found in that file.");
+            return;
+            }
+            const existingIds = new Set(tasks.map(t=>t.id));
+            let added = 0;
+            incoming.forEach(t=>{
+            if (!t.id || existingIds.has(t.id)) {
+                t.id = uid();
+            }
+            tasks.push(t);
+            added++;
+            });
+            saveAll();
+            render();
+            alert(`Imported ${added} tasks.`);
+        } catch (err) {
+            console.error(err);
+            alert("Invalid file format.");
+        } finally {
+            importFile.value = "";
+        }
+        };
+        reader.readAsText(f);
+    });
+    }
+    </script>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import {
+        getFirestore,
+        collection,
+        doc,
+        addDoc,
+        deleteDoc,
+        updateDoc,
+        onSnapshot,
+        query,
+        orderBy,
+        enableIndexedDbPersistence
+    } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import {
+        getAuth,
+        GoogleAuthProvider,
+        signInWithPopup,
+        signOut,
+        onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+    // YOUR firebaseConfig (kept from your console)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCEsfRiiTM_A8xVQfJOY9vkL_tTN1vtdNg",
+        authDomain: "to-do-list-39a05.firebaseapp.com",
+        projectId: "to-do-list-39a05",
+        storageBucket: "to-do-list-39a05.firebasestorage.app",
+        messagingSenderId: "878024447633",
+        appId: "1:878024447633:web:14364b6a8311e44bc59130",
+        measurementId: "G-MLJQF2G5CF"
+    };
+
+    // init firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    // UI refs
+    const loginBtn = document.getElementById("login-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+    const quickAddBtn = document.getElementById("quickAdd");
+    // sharing variables with main script
+    window.userUid = null;
+    let userTasksRef = null;
+    let unsubscribe = null;
+
+    // Helper to update local tasks array and storage
+    function replaceLocalTasks(newArr) {
+        window.tasks = newArr;
+        try { window.saveAll(); } catch(e){}
+        try { window.render(); } catch(e){ console.warn(e); }
+    }
+
+    // 🔥 NEW FUNCTION: Upload local tasks to Firestore
+    async function uploadLocalTasksToFirestore() {
+        if (!userTasksRef) return;
+        
+        try {
+            // Get current local tasks
+            const localTasks = JSON.parse(localStorage.getItem("weekly_todos_v1") || "[]");
+            
+            if (localTasks.length === 0) return;
+            
+            console.log(`Uploading ${localTasks.length} local tasks to Firestore...`);
+            
+            // Upload each local task to Firestore
+            for (const task of localTasks) {
+                // Don't upload duplicates - check if task already exists
+                const taskPayload = {
+                    title: task.title,
+                    priority: task.priority,
+                    assignedDate: task.assignedDate,
+                    note: task.note || '',
+                    done: task.done || false,
+                    created: task.created || new Date().toISOString(),
+                    week: task.week || window.weekKey(window.currentWeekStart),
+                    completedAt: task.completedAt || null
+                };
+                
+                await addDoc(userTasksRef, taskPayload);
+            }
+            
+            console.log('Successfully uploaded local tasks to Firestore');
+            
+            // Clear local storage after successful upload
+            localStorage.removeItem("weekly_todos_v1");
+            
+        } catch (error) {
+            console.error('Error uploading local tasks:', error);
+            alert('Failed to sync local tasks to cloud. Please refresh and try again.');
+        }
+    }
+
+    // Auth UI
+    loginBtn.addEventListener('click', async () => {
+        try { await signInWithPopup(auth, provider); }
+        catch (e) { console.error(e); alert('Sign-in failed: ' + (e.message||e)); }
+    });
+    logoutBtn.addEventListener('click', async () => {
+        try { await signOut(aauth); }
+        catch(e){ console.warn(e); }
+    });
+
+    // on auth change: set collection ref, enable offline, subscribe to changes
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            window.userUid = user.uid;
+            userTasksRef = collection(db, 'users', window.userUid, 'tasks');
+
+            // try enable offline persistence
+            enableIndexedDbPersistence(db).catch(err => {
+                console.warn('IndexedDB persistence could not be enabled:', err && err.code ? err.code : err);
+            });
+
+            // 🔥 NEW: Upload local tasks to Firestore when signing in
+            await uploadLocalTasksToFirestore();
+
+            // listen to user's tasks (realtime)
+            const q = query(userTasksRef, orderBy('created', 'desc'));
+            if (unsubscribe) unsubscribe();
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                const remoteTasks = [];
+                snapshot.forEach(d => remoteTasks.push({ id: d.id, ...d.data() }));
+                replaceLocalTasks(remoteTasks);
+            }, err => {
+                console.error('Snapshot error', err);
+            });
+
+            // UI toggles
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            console.log('Signed in as', user.email || window.userUid);
+        } else {
+            // signed out
+            window.userUid = null;
+            userTasksRef = null;
+            if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+            // keep local tasks as-is (no cloud)
+            if (loginBtn) loginBtn.style.display = 'inline-block';
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            console.log('Signed out');
+            // render local tasks
+            try { window.render(); } catch(e){}
+        }
+    });
+
+    // Firestore CRUD helpers
+    async function addTaskToFirestore(t) {
+        if (!userTasksRef) { alert('Please login to sync'); return; }
+        await addDoc(userTasksRef, t);
+    }
+    async function deleteTaskFromFirestore(id) {
+        if (!window.userUid) return;
+        await deleteDoc(doc(db, 'users', window.userUid, 'tasks', id));
+    }
+    async function updateTaskInFirestore(id, patch) {
+        if (!window.userUid) return;
+        await updateDoc(doc(db, 'users', window.userUid, 'tasks', id), patch);
+    }
+
+    // override createTask to push to Firestore when logged in
+    const originalCreateTask = window.createTask;
+    window.createTask = async function(obj) {
+        if (userTasksRef) {
+            const created = new Date().toISOString();
+            const wk = (typeof window.weekKey === 'function') ? window.weekKey(window.currentWeekStart) : null;
+            const payload = {
+                title: obj.title,
+                priority: obj.priority || 'medium',
+                assignedDate: obj.assignedDate || null,
+                note: obj.note || '',
+                done: false,
+                created,
+                week: wk
+            };
+            await addTaskToFirestore(payload);
+            return;
+        } else {
+            return originalCreateTask(obj);
+        }
+    };
+
+    // override toggleDone
+    const origToggle = window.toggleDone;
+    window.toggleDone = async function(id) {
+        if (userTasksRef) {
+            const t = window.tasks.find(x=>x.id===id);
+            if (!t) return;
+            const newDone = !t.done;
+            const patch = { done: newDone };
+            if (newDone) patch.completedAt = new Date().toISOString(); else patch.completedAt = null;
+            await updateTaskInFirestore(id, patch);
+        } else {
+            origToggle(id);
+        }
+    };
+
+    // override moveToNextWeek
+    const origMove = window.moveToNextWeek;
+    window.moveToNextWeek = async function(id) {
+        if (userTasksRef) {
+            const nextStart = new Date(window.currentWeekStart); 
+            nextStart.setDate(nextStart.getDate()+7);
+            const newWeek = (typeof window.weekKey === 'function') ? window.weekKey(nextStart) : window.isoLocal(nextStart);
+            await updateTaskInFirestore(id, { week: newWeek, assignedDate: null });
+        } else {
+            origMove(id);
+        }
+    };
+
+    // unified deleteTask used by UI (calls Firestore if logged in, else local)
+    window.deleteTask = async function(id) {
+        if (userTasksRef) {
+            await deleteTaskFromFirestore(id);
+        } else {
+            // fallback local deletion
+            window.tasks = window.tasks.filter(x=>x.id !== id);
+            window.saveAll();
+            window.render();
+        }
+    };
+
+    // wire quickAdd button to createTask (already does) — ensure behavior when logged in uses Firestore
+    const quickAddBtnLocal = document.getElementById('quickAdd');
+    if (quickAddBtnLocal) {
+        quickAddBtnLocal.addEventListener('click', () => {
+            const text = (document.getElementById('quickText')||{}).value?.trim();
+            if (!text) return;
+            window.createTask({ 
+                title: text, 
+                priority: (document.getElementById('quickPrio')||{}).value || 'medium', 
+                assignedDate: null, 
+                note: '' 
+            });
+            (document.getElementById('quickText')||{}).value = '';
+        });
+    }
+
+    // expose firebase helpers
+    window._firebase = { addTaskToFirestore, updateTaskInFirestore, deleteTaskFromFirestore };
+
+    console.log('Firebase sync module ready');
+    </script>
+</body>
+</html>
