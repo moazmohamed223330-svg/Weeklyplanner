@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Michroma&display=swap');
+*{
+    padding: 0;
+    margin: 0;
+}
+body{
+    background: linear-gradient(#0d1e6d,#000 );
+    height: 100vh;
+}
+.logo{
+    font-family: Michroma;
+    font-size: 23px;
+    margin-left: 40px;
+}
+.navbar{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.navbar ul{
+    margin-right: 10px;
+    margin-top: 10px;
+}
+a{
+    text-decoration: none;
+}
+ul li{
+    list-style: none;
+}
+.nav-links {
+    display:flex ;
+}
+.nav-links a{
+    margin-left: 20px;
+    color: black;
+    font-family: Michroma;
+    padding: 5px;
+}
+.nav-links a:hover{
+    background-color: #650b0b;
+    color: #fff;
+    text-decoration: double;
+    border-radius: 20px;
+}
+nav{
+    background-color:#fff;
+    align-items: center;
+}
+/* Header End */
+.header{
+    display: flex;
+    justify-content: center;
+}
+header h1{
+    color: #000;
+    margin-left: 60px;
+    margin-top: 30px;
+}
+.p-header{
+    display: flex;
+    justify-content: center;
+}
+header p{
+    color: #fff;
+    margin-left: 70px;
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: 700;
+}
+#games h2{
+    color: #fff;
+    margin-left: 20px;
+}
+#games .buttons{
+    margin-left: 40px;
+    margin-top: 20px;
+}
+.buttons button{
+    margin-right: 30px;
+    border: none;
+    padding: 20px;
+    border-radius: 50px;
+}
